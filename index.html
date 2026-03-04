@@ -81,6 +81,18 @@ tr:hover { background:#f0f7ff;}
 .col-step { width: 85px; }
 .col-expert { width: 70px; }
 .col-score { width: 75px; }
+
+/* Submit hint style - initially hidden via CSS class */
+.submit-hint { 
+  display:none; 
+  margin-top:12px; 
+  padding:8px 12px; 
+  background:#e8f5e9; 
+  border-left:4px solid #4caf50; 
+  color:#2e7d32; 
+  font-weight:bold; 
+  font-size:14px;
+}
 </style>
 </head>
 <body>
@@ -109,7 +121,7 @@ tr:hover { background:#f0f7ff;}
 
 <button onclick="calc()">Calculate Results</button>
 <button onclick="submitData()" id="submitBtn" style="display:none;">Submit Results</button>
-<div id="submitHint" style="display:none; margin-top:12px; padding:8px 12px; background:#e8f5e9; border-left:4px solid #4caf50; color:#2e7d32; font-weight:bold; font-size:14px; display: inline-block;">
+<div id="submitHint" class="submit-hint">
 ✅ Calculation complete! Please check scores and click "Submit Results"
 </div>
 
