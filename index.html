@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Winter Survival Exercise</title>
+<style>
+body { font-family: Arial, sans-serif; margin:30px; background:#f9f9f9;}
+h2 { text-align:center; margin-bottom:10px; color:#2c3e50;}
+.hint { text-align:center; color:#d9534f; font-weight:bold; margin-bottom:20px; font-size:16px;}
+label { font-size:18px; font-weight:bold; margin-right:10px;}
+input.text-input { font-size:18px; padding:5px 10px; margin-bottom:15px; width:200px;}
+table { width:100%; border-collapse:collapse; background:white; margin-top:20px;}
+th,td { border:1px solid #ccc; padding:10px; text-align:center;}
+th { background:#f0f0f0; font-size:14px;}
+td { font-size:15px;}
+input.rank-input { width:60px; text-align:center; font-size:16px; padding:5px;}
+.expert { color:red; font-weight:bold; background:#ffe6e6;}
+button { margin-top:20px; font-size:18px; padding:10px 20px; background:#4285f4; color:white; border:none; border-radius:6px; cursor:pointer; margin-right:10px;}
+button:hover { background:#2a63c7;}
+.sum-cell { background:#fff8b3; font-weight:bold; font-size:16px;}
+.note-cell { text-align:right; font-weight:bold; background:#f8f9fa; font-size:16px;}
+.step-header { background:#e3f2fd; font-weight:bold;}
+.score-header { background:#fff3e0; font-weight:bold;}
+tr:nth-child(even) { background:#fafafa;}
+tr:hover { background:#f0f7ff;}
+
+/* Initial hidden columns */
+.hidden-col { display: none; }
+/* Show after calculation */
+.show-col { display: table-cell; }
+</style>
+</head>
+<body>
+
+<h2>❄️ Winter Survival Exercise ❄️</h2>
+<div id="hint" class="hint">👉 Please complete Steps 1-3 first, then click "Calculate Results"</div>
+
+<label>Your Group Number:</label>
+<input id="group" class="text-input" placeholder="Enter group number"><br>
+
+<label>Your Name:</label>
+<input id="name" class="text-input" placeholder="Enter your name"><br>
+
+<table id="score-table">
+<tr id="header-row">
+<th style="width:30%;">Item</th>
+<th style="width:15%;" class="step-header">Step 1<br>Individual Ranking<br><small>(Before Discussion)</small></th>
+<th style="width:15%;" class="step-header">Step 2<br>Team Ranking<br><small>(Consensus After Discussion)</small></th>
+<th style="width:15%;" class="step-header">Step 3<br>Individual Ranking<br><small>(After Discussion)</small></th>
+<th style="width:10%; display:none;" class="expert-col hidden-col">Expert Ranking</th>
+<th style="width:10%; display:none;" class="score-col hidden-col">Step 4<br>Individual Score<br><small>|1-Expert|</small></th>
+<th style="width:10%; display:none;" class="score-col hidden-col">Step 5<br>Team Score<br><small>|2-Expert|</small></th>
+<th style="width:10%; display:none;" class="score-col hidden-col">Step 6<br>Individual Score<br><small>|3-Expert|</small></th>
+</tr>
+</table>
+
+<button onclick="calc()">Calculate Results</button>
+<button onclick="submitData()" id="submitBtn" style="display:none;">Submit Results</button>
+
+<script>
+
+// Items displayed in English (but submitted with Chinese keys for backend compatibility)
+const itemsDisplay = [
+"Ball of Heavy String",
+"Hand Axe",
+"Pistol (loaded)",
+"Can of Solid Butter (large, metal)",
+"Newspaper (one per person)",
+"Lighter (out of fuel)",
+"Winter Clothing (one set per person)",
+"Tarp (20ft x 20ft heavy canvas)",
+"Plastic Aeronautical Map",
+"Bottle of High-Proof Whiskey (1 liter)",
+"Compass",
+"Family-Size Chocolate Bars (one per person)"
+];
+
+// Items submitted to backend (Chinese - must match existing Excel headers)
+const itemsSubmit = [
+"一团粗毛线",
+"一柄手斧",
+"一支满匣子弹的手枪",
+"金属大罐装固体黄油",
+"报纸（每人一份）",
+"一只打火机（已经没油了）",
+"防寒衣物（每人一套）",
+"一块20英尺×20英尺的厚帆布",
+"塑料制成的航空地图",
+"一升高酒精含量的威士忌",
+"一个指南针",
+"家庭装的巧克力棒（每人一份）"
+];
+
+// Expert rankings
+const expert = [2, 6, 9, 4, 8, 1, 3, 5, 12, 10, 11, 7];
+
+const table = document.getElementById("score-table");
+let calculated = false;
+
+// Initialize table
+itemsDisplay.forEach((item, i) => {
+const tr = document.createElement("tr");
+tr.innerHTML = `
+<td style="text-align:left; padding-left:15px; font-weight:bold;">${item}</td>
+<td><input id="p1-${i}" class="rank-input" placeholder="1-12" min="1" max="12"></td>
+<td><input id="p2-${i}" class="rank-input" placeholder="1-12" min="1" max="12"></td>
+<td><input id="p3-${i}" class="rank-input" placeholder="1-12" min="1" max="12"></td>
+<td id="exp-${i}" class="expert hidden-col expert-col" style="display:none;">${expert[i]}</td>
+<td id="s4-${i}" class="hidden-col score-col" style="background:#fff8b3; display:none;"></td>
+<td id="s5-${i}" class="hidden-col score-col" style="background:#fff8b3; display:none;"></td>
+<td id="s6-${i}" class="hidden-col score-col" style="background:#fff8b3; display:none;"></td>
+`;
+table.appendChild(tr);
+});
+
+// Add total row (initially hidden)
+const sumRow = document.createElement("tr");
+sumRow.id = "sum-row";
+sumRow.style.display = "none";
+sumRow.innerHTML = `
+<td class="note-cell" colspan="4" style="font-size:16px; padding-right:20px;">
+Total of Steps 4, 5, 6 Score Differences (Lower is Better) →
+</td>
+<td class="hidden-col expert-col" style="display:none;">-</td>
+<td id="sum4" class="sum-cell hidden-col score-col" style="font-size:18px; color:#d32f2f; display:none;"></td>
+<td id="sum5" class="sum-cell hidden-col score-col" style="font-size:18px; color:#d32f2f; display:none;"></td>
+<td id="sum6" class="sum-cell hidden-col score-col" style="font-size:18px; color:#d32f2f; display:none;"></td>
+`;
+table.appendChild(sumRow);
+
+function calc(){
+let total4=0, total5=0, total6=0;
+let valid = true;
+let emptyFields = [];
+
+// Validate all fields
+itemsDisplay.forEach((_, i) => {
+let p1 = document.getElementById(`p1-${i}`).value.trim();
+let p2 = document.getElementById(`p2-${i}`).value.trim();
+let p3 = document.getElementById(`p3-${i}`).value.trim();
+
+if(!p1 || !p2 || !p3) {
+valid = false;
+emptyFields.push(i+1);
+return;
+}
+
+p1 = Number(p1);
+p2 = Number(p2);
+p3 = Number(p3);
+
+// Validate input range
+if(isNaN(p1) || isNaN(p2) || isNaN(p3) || p1 < 1 || p1 > 12 || p2 < 1 || p2 > 12 || p3 < 1 || p3 > 12) {
+valid = false;
+return;
+}
+
+let exp = expert[i];
+let v4 = Math.abs(p1 - exp);
+let v5 = Math.abs(p2 - exp);
+let v6 = Math.abs(p3 - exp);
+
+document.getElementById(`s4-${i}`).innerText = v4;
+document.getElementById(`s5-${i}`).innerText = v5;
+document.getElementById(`s6-${i}`).innerText = v6;
+
+total4 += v4;
+total5 += v5;
+total6 += v6;
+});
+
+if(!valid) {
+if(emptyFields.length > 0) {
+alert(`Please fill in rankings for all items! Missing item(s): ${emptyFields.join(', ')}`);
+} else {
+alert("Please ensure all rankings are numbers between 1-12!");
+}
+return;
+}
+
+// Display totals
+document.getElementById("sum4").innerText = total4;
+document.getElementById("sum5").innerText = total5;
+document.getElementById("sum6").innerText = total6;
+
+// Show hidden columns
+document.querySelectorAll(".hidden-col").forEach(el => {
+el.style.display = "table-cell";
+});
+document.getElementById("sum-row").style.display = "table-row";
+
+// Hide hint, show submit button
+document.getElementById("hint").style.display = "none";
+document.getElementById("submitBtn").style.display = "inline-block";
+
+calculated = true;
+
+// Scroll to bottom
+document.getElementById("sum-row").scrollIntoView({ behavior: 'smooth' });
+}
+
+function submitData(){
+if(!calculated) {
+alert("Please click 'Calculate Results' first!");
+return;
+}
+
+const group = document.getElementById("group").value.trim();
+const name = document.getElementById("name").value.trim();
+
+if(!group || !name){
+alert("Please enter your group number and name!");
+return;
+}
+
+// Build data object - using Chinese item names for backend compatibility
+const payload = {
+group: group,
+name: name,
+timestamp: new Date().toISOString()
+};
+
+// Add data for each item (using Chinese names for submission)
+itemsSubmit.forEach((item, i) => {
+payload[`item${i}_name`] = item;
+payload[`item${i}_step1`] = document.getElementById(`p1-${i}`).value;
+payload[`item${i}_step2`] = document.getElementById(`p2-${i}`).value;
+payload[`item${i}_step3`] = document.getElementById(`p3-${i}`).value;
+payload[`item${i}_expert`] = expert[i];
+payload[`item${i}_score4`] = document.getElementById(`s4-${i}`).innerText;
+payload[`item${i}_score5`] = document.getElementById(`s5-${i}`).innerText;
+payload[`item${i}_score6`] = document.getElementById(`s6-${i}`).innerText;
+});
+
+// Add totals
+payload.sum4 = document.getElementById("sum4").innerText;
+payload.sum5 = document.getElementById("sum5").innerText;
+payload.sum6 = document.getElementById("sum6").innerText;
+
+console.log("Sending data:", payload);
+
+// Submit using Image object to avoid CORS issues
+const scriptUrl = "https://script.google.com/macros/s/AKfycbxmCCKKMlv5NEPv8r7FoVVtw83V-YYQh6yzGSmW0-e8_QgHsOW4PeTpBMXkwDe2903OiQ/exec";
+
+const params = new URLSearchParams();
+for(let key in payload) {
+params.append(key, payload[key]);
+}
+
+const img = new Image();
+img.onload = function() {
+alert("Submission successful! 😊");
+document.getElementById("submitBtn").disabled = true;
+document.getElementById("submitBtn").innerText = "Submitted";
+};
+img.onerror = function() {
+// Image load error usually means request was sent (cross-origin restriction prevents reading response)
+alert("Submission successful! 😊");
+document.getElementById("submitBtn").disabled = true;
+document.getElementById("submitBtn").innerText = "Submitted";
+};
+img.src = scriptUrl + "?" + params.toString();
+}
+</script>
+
+</body>
+</html>
