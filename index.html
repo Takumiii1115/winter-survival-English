@@ -4,30 +4,83 @@
 <meta charset="UTF-8">
 <title>Winter Survival Exercise</title>
 <style>
-body { font-family: Arial, sans-serif; margin:30px; background:#f9f9f9;}
-h2 { text-align:center; margin-bottom:10px; color:#2c3e50;}
-.hint { text-align:center; color:#d9534f; font-weight:bold; margin-bottom:20px; font-size:16px;}
-label { font-size:18px; font-weight:bold; margin-right:10px;}
-input.text-input { font-size:18px; padding:5px 10px; margin-bottom:15px; width:200px;}
-table { width:100%; border-collapse:collapse; background:white; margin-top:20px;}
-th,td { border:1px solid #ccc; padding:10px; text-align:center;}
-th { background:#f0f0f0; font-size:14px;}
-td { font-size:15px;}
-input.rank-input { width:60px; text-align:center; font-size:16px; padding:5px;}
-.expert { color:red; font-weight:bold; background:#ffe6e6;}
-button { margin-top:20px; font-size:18px; padding:10px 20px; background:#4285f4; color:white; border:none; border-radius:6px; cursor:pointer; margin-right:10px;}
+body { font-family: Arial, sans-serif; margin:20px; background:#f9f9f9; max-width: 1400px; margin-left: auto; margin-right: auto;}
+h2 { text-align:center; margin-bottom:10px; color:#2c3e50; font-size: 24px;}
+.hint { text-align:center; color:#d9534f; font-weight:bold; margin-bottom:15px; font-size:15px;}
+label { font-size:16px; font-weight:bold; margin-right:10px;}
+input.text-input { font-size:16px; padding:5px 10px; margin-bottom:12px; width:180px;}
+
+table { 
+  width:100%; 
+  border-collapse:collapse; 
+  background:white; 
+  table-layout: fixed;
+  font-size: 13px;
+}
+th,td { 
+  border:1px solid #ccc; 
+  padding:6px 3px; 
+  text-align:center; 
+}
+th { 
+  background:#f0f0f0; 
+  font-size:12px; 
+  line-height:1.2;
+  font-weight: bold;
+}
+td { line-height:1.3;}
+input.rank-input { 
+  width:45px; 
+  text-align:center; 
+  font-size:13px; 
+  padding:3px;
+  border: 1px solid #999;
+  border-radius: 3px;
+}
+.expert { 
+  color:red; 
+  font-weight:bold; 
+  background:#ffe6e6;
+  font-size: 14px;
+}
+button { 
+  margin-top:15px; 
+  font-size:16px; 
+  padding:8px 16px; 
+  background:#4285f4; 
+  color:white; 
+  border:none; 
+  border-radius:5px; 
+  cursor:pointer; 
+  margin-right:10px;
+}
 button:hover { background:#2a63c7;}
-.sum-cell { background:#fff8b3; font-weight:bold; font-size:16px;}
-.note-cell { text-align:right; font-weight:bold; background:#f8f9fa; font-size:16px;}
-.step-header { background:#e3f2fd; font-weight:bold;}
-.score-header { background:#fff3e0; font-weight:bold;}
+.sum-cell { 
+  background:#fff8b3; 
+  font-weight:bold; 
+  font-size:15px;
+  color: #d32f2f;
+}
+.note-cell { 
+  text-align:right; 
+  font-weight:bold; 
+  background:#f8f9fa; 
+  font-size:13px;
+  padding-right: 10px;
+}
+.step-header { background:#e3f2fd;}
+.score-header { background:#fff3e0;}
 tr:nth-child(even) { background:#fafafa;}
 tr:hover { background:#f0f7ff;}
 
 /* Initial hidden columns */
 .hidden-col { display: none; }
-/* Show after calculation */
-.show-col { display: table-cell; }
+
+/* Column widths - compact version matching Chinese version */
+.col-item { width: 140px; }
+.col-step { width: 85px; }
+.col-expert { width: 70px; }
+.col-score { width: 75px; }
 </style>
 </head>
 <body>
@@ -43,19 +96,22 @@ tr:hover { background:#f0f7ff;}
 
 <table id="score-table">
 <tr id="header-row">
-<th style="width:30%;">Item</th>
-<th style="width:15%;" class="step-header">Step 1<br>Individual Ranking<br><small>(Before Discussion)</small></th>
-<th style="width:15%;" class="step-header">Step 2<br>Team Ranking<br><small>(Consensus After Discussion)</small></th>
-<th style="width:15%;" class="step-header">Step 3<br>Individual Ranking<br><small>(After Discussion)</small></th>
-<th style="width:10%; display:none;" class="expert-col hidden-col">Expert Ranking</th>
-<th style="width:10%; display:none;" class="score-col hidden-col">Step 4<br>Individual Score<br><small>|1-Expert|</small></th>
-<th style="width:10%; display:none;" class="score-col hidden-col">Step 5<br>Team Score<br><small>|2-Expert|</small></th>
-<th style="width:10%; display:none;" class="score-col hidden-col">Step 6<br>Individual Score<br><small>|3-Expert|</small></th>
+<th class="col-item">Item</th>
+<th class="col-step step-header">Step 1<br>Individual<br><small>(Before)</small></th>
+<th class="col-step step-header">Step 2<br>Team<br><small>(After)</small></th>
+<th class="col-step step-header">Step 3<br>Individual<br><small>(After)</small></th>
+<th class="col-expert hidden-col expert-col">Expert<br>Rank</th>
+<th class="col-score hidden-col score-col">Step 4<br>Individual<br>Score</th>
+<th class="col-score hidden-col score-col">Step 5<br>Team<br>Score</th>
+<th class="col-score hidden-col score-col">Step 6<br>Individual<br>Score</th>
 </tr>
 </table>
 
 <button onclick="calc()">Calculate Results</button>
 <button onclick="submitData()" id="submitBtn" style="display:none;">Submit Results</button>
+<div id="submitHint" style="display:none; margin-top:12px; padding:8px 12px; background:#e8f5e9; border-left:4px solid #4caf50; color:#2e7d32; font-weight:bold; font-size:14px; display: inline-block;">
+✅ Calculation complete! Please check scores and click "Submit Results"
+</div>
 
 <script>
 
@@ -101,14 +157,14 @@ let calculated = false;
 itemsDisplay.forEach((item, i) => {
 const tr = document.createElement("tr");
 tr.innerHTML = `
-<td style="text-align:left; padding-left:15px; font-weight:bold;">${item}</td>
+<td style="text-align:left; padding-left:8px; font-weight:bold; font-size:12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${item}">${item}</td>
 <td><input id="p1-${i}" class="rank-input" placeholder="1-12" min="1" max="12"></td>
 <td><input id="p2-${i}" class="rank-input" placeholder="1-12" min="1" max="12"></td>
 <td><input id="p3-${i}" class="rank-input" placeholder="1-12" min="1" max="12"></td>
-<td id="exp-${i}" class="expert hidden-col expert-col" style="display:none;">${expert[i]}</td>
-<td id="s4-${i}" class="hidden-col score-col" style="background:#fff8b3; display:none;"></td>
-<td id="s5-${i}" class="hidden-col score-col" style="background:#fff8b3; display:none;"></td>
-<td id="s6-${i}" class="hidden-col score-col" style="background:#fff8b3; display:none;"></td>
+<td id="exp-${i}" class="expert hidden-col expert-col">${expert[i]}</td>
+<td id="s4-${i}" class="hidden-col score-cell" style="background:#fff8b3;"></td>
+<td id="s5-${i}" class="hidden-col score-cell" style="background:#fff8b3;"></td>
+<td id="s6-${i}" class="hidden-col score-cell" style="background:#fff8b3;"></td>
 `;
 table.appendChild(tr);
 });
@@ -118,13 +174,13 @@ const sumRow = document.createElement("tr");
 sumRow.id = "sum-row";
 sumRow.style.display = "none";
 sumRow.innerHTML = `
-<td class="note-cell" colspan="4" style="font-size:16px; padding-right:20px;">
-Total of Steps 4, 5, 6 Score Differences (Lower is Better) →
+<td class="note-cell" colspan="4" style="font-size:13px;">
+Total Score Differences (Lower is Better) →
 </td>
-<td class="hidden-col expert-col" style="display:none;">-</td>
-<td id="sum4" class="sum-cell hidden-col score-col" style="font-size:18px; color:#d32f2f; display:none;"></td>
-<td id="sum5" class="sum-cell hidden-col score-col" style="font-size:18px; color:#d32f2f; display:none;"></td>
-<td id="sum6" class="sum-cell hidden-col score-col" style="font-size:18px; color:#d32f2f; display:none;"></td>
+<td class="hidden-col expert-col">-</td>
+<td id="sum4" class="sum-cell hidden-col"></td>
+<td id="sum5" class="sum-cell hidden-col"></td>
+<td id="sum6" class="sum-cell hidden-col"></td>
 `;
 table.appendChild(sumRow);
 
@@ -189,14 +245,17 @@ el.style.display = "table-cell";
 });
 document.getElementById("sum-row").style.display = "table-row";
 
-// Hide hint, show submit button
+// Hide hint, show submit button and submit hint
 document.getElementById("hint").style.display = "none";
 document.getElementById("submitBtn").style.display = "inline-block";
+document.getElementById("submitHint").style.display = "inline-block";
 
 calculated = true;
 
 // Scroll to bottom
+setTimeout(() => {
 document.getElementById("sum-row").scrollIntoView({ behavior: 'smooth' });
+}, 100);
 }
 
 function submitData(){
@@ -252,12 +311,14 @@ img.onload = function() {
 alert("Submission successful! 😊");
 document.getElementById("submitBtn").disabled = true;
 document.getElementById("submitBtn").innerText = "Submitted";
+document.getElementById("submitHint").style.display = "none";
 };
 img.onerror = function() {
 // Image load error usually means request was sent (cross-origin restriction prevents reading response)
 alert("Submission successful! 😊");
 document.getElementById("submitBtn").disabled = true;
 document.getElementById("submitBtn").innerText = "Submitted";
+document.getElementById("submitHint").style.display = "none";
 };
 img.src = scriptUrl + "?" + params.toString();
 }
